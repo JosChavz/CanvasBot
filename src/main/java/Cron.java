@@ -15,6 +15,7 @@ public class Cron {
 
     assignmentCronTask();
     assignmentsCleanUp();
+    dailyAssignmentTask();
   }
 
   private void assignmentCronTask() {
@@ -58,6 +59,37 @@ public class Cron {
     CronScheduler cron = CronScheduler.create(syncPeriod);
     cron.scheduleAtFixedRateSkippingToLatest(0, 1, TimeUnit.HOURS, runTimeMillis -> {
       Cache.cleanCache();
+    });
+  }
+
+  private void dailyAssignmentTask() {
+    Duration syncPeriod = Duration.ofHours(24);
+    CronScheduler cron = CronScheduler.create(syncPeriod);
+    cron.scheduleAtFixedRateSkippingToLatest(0, 1, TimeUnit.HOURS, runTimeMillis -> {
+      String message = "";
+      // will call the API here
+      ArrayList<Assignment> todaysAssigments= api.getTomorrowAssignments();
+      // There are assignments due today - Check time
+      int todayHour = Integer.parseInt(CanvasAPI.todayTimeArr[0]);
+
+      if(todaysAssigments != null && !todaysAssigments.isEmpty()) {
+        for(Assignment assignment : todaysAssigments) {
+          String due = assignment.getDueDate();
+          String assignmentName = assignment.getName();
+          // System.out.println("Assignment name: " + assignmentName);
+
+          // Checks to see if the current hour is an hour before the assignment's time
+          if(!assignment.getHasPublished()) {
+            message = "\n**" + assignmentName + "** due **__tomorrow__** at " + assignment.correctTimeZoneDueDateTime + "!";
+            assignment.publish();
+          }
+          //bot.getChannelById(id).block().getRestChannel().createMessage(assignmentName + " due in an hour!").block();
+        } // OUT OF FOR-LOOP
+        // bot.getGuildById(Snowflake.of("")).block().getChannelById(Snowflake.of("")); flexible way when more servers?
+        boolean channelSet = !(DiscordMain.announcementChannel.asString().isEmpty());
+        if(!message.isEmpty() && channelSet)
+          bot.getChannelById(DiscordMain.announcementChannel).block().getRestChannel().createMessage("@everyone" + message).block();
+      } // OUT OF IF-STATEMENT
     });
   }
 }
