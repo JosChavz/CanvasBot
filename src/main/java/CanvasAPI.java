@@ -22,7 +22,9 @@ public class CanvasAPI {
     public CanvasAPI(String key, String url) {
         this.key = key;
         this.url = url;
+    }
 
+    public void initializeTime() {
         // Date
         TimeZone.setDefault( TimeZone.getTimeZone("UTC")); // SET SYSTEM TIME TO UTC
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -42,6 +44,9 @@ public class CanvasAPI {
         boolean newAssignments = true;
         HttpResponse<JsonNode> jsonResponse = null;
         ArrayList<Assignment> todaysAssignmentsArr = new ArrayList<>();
+
+        // initializes new time
+        initializeTime();
 
         System.out.println(ConsoleColors.WHITE_BACKGROUND + ConsoleColors.BLACK_BOLD + "API called at (UTC):" + ConsoleColors.RESET);
         System.out.println(todayDate);
@@ -112,7 +117,7 @@ public class CanvasAPI {
             return todaysAssignmentsArr;
         } catch(Exception e) {
             System.out.println("Something went wrong...");
-            System.exit(0);
+            //System.exit(0);
         }
 
         return null;

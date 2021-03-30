@@ -1,9 +1,7 @@
 import java.time.Duration;
 
-import discord4j.common.util.Snowflake;
 import io.timeandspace.cronscheduler.CronScheduler;
 import discord4j.core.GatewayDiscordClient;
-import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
@@ -29,7 +27,7 @@ public class Cron {
       // There are assignments due today - Check time
       int todayHour = Integer.parseInt(CanvasAPI.todayTimeArr[0]);
 
-      if(todaysAssigments != null) {
+      if(todaysAssigments != null && !todaysAssigments.isEmpty()) {
         for(Assignment assignment : todaysAssigments) {
           String due = assignment.getDueDateTime();
           String assignmentName = assignment.getName();
@@ -48,11 +46,10 @@ public class Cron {
           //bot.getChannelById(id).block().getRestChannel().createMessage(assignmentName + " due in an hour!").block();
         } // OUT OF FOR-LOOP
         // bot.getGuildById(Snowflake.of("")).block().getChannelById(Snowflake.of("")); flexible way when more servers?
-        boolean channelSet = !(Main.announcementChannel.asString().isEmpty());
+        boolean channelSet = !(DiscordMain.announcementChannel.asString().isEmpty());
         if(!message.isEmpty() && channelSet)
-          bot.getChannelById(Main.announcementChannel).block().getRestChannel().createMessage("@everyone" + message).block();
+          bot.getChannelById(DiscordMain.announcementChannel).block().getRestChannel().createMessage("@everyone" + message).block();
       } // OUT OF IF-STATEMENT
-
     });
   }
 

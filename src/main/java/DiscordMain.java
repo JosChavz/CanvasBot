@@ -15,7 +15,7 @@ import org.ini4j.*;
 import java.util.HashMap;
 import java.util.function.Consumer;
 
-public class Main {
+public class DiscordMain {
   public static Snowflake announcementChannel;
 
   public static void main(String[] args) {
