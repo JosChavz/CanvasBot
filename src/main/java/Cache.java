@@ -21,14 +21,14 @@ public class Cache {
 
         for(String key : cache.keySet()) {
             Assignment tempAssignment = cache.get(key);
-            String due = tempAssignment.getDueDateTime();
+            String due = tempAssignment.correctTimeZoneDueDateTime;
             // Assignment Due Time
             String[] assignmentTime = due.split(":");
             int assignmentHour = Integer.parseInt(assignmentTime[0]);
             // Removes the assignment the same hour or less than Today's Hour
             if(assignmentHour <= todayHour && tempAssignment.getHasPublished()) {
                 System.out.println(ConsoleColors.RED_BOLD + "Removed [" + tempAssignment.getName() + "] that was due on " +
-                        tempAssignment.getDueDateTime() + " UTC" + ConsoleColors.RESET);
+                        due + " PST" + ConsoleColors.RESET);
                 cache.remove(key);
             }
         }
