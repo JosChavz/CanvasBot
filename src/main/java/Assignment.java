@@ -4,6 +4,7 @@ import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 import java.util.Objects;
+import java.time.temporal.ChronoUnit;
 
 public class Assignment {
     private String name;
@@ -12,7 +13,6 @@ public class Assignment {
     public String correctTimeZoneDueDateTime;
     public String correctTimeZoneDueDate;
     private boolean hasPublished;
-    private boolean isForTomorrow;
 
     public Assignment(JSONObject json) {
         this.name = json.getString("name");
@@ -21,6 +21,9 @@ public class Assignment {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
         LocalDateTime localtDateAndTime = LocalDateTime.parse(date_time, formatter);
         ZonedDateTime utcTime = ZonedDateTime.of(localtDateAndTime, ZoneId.of("UTC"));
+
+        utcTime.minus(24, ChronoUnit.HOURS);
+
         // Changes UTC to User's Time Zone
         ZoneId cali = ZoneId.of("America/Los_Angeles"); // has to be changed for the flexibility of users
         ZonedDateTime pacificTime = utcTime.withZoneSameInstant(cali); // has to be changed for the flexibility of users
@@ -29,7 +32,6 @@ public class Assignment {
         this.dueDate = date_time.substring(0, date_time.indexOf('T'));
         this.dueDateTime = date_time.substring(date_time.indexOf('T') + 1);
         this.hasPublished = false;
-        this.isForTomorrow = false;
     }
 
     public String getName() {
@@ -63,9 +65,5 @@ public class Assignment {
     @Override
     public int hashCode() {
         return Objects.hash(name, dueDate, dueDateTime);
-    }
-
-    public void setForTomorrow(boolean forTomorrow) {
-        isForTomorrow = forTomorrow;
     }
 }

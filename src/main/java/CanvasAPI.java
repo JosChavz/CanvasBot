@@ -4,10 +4,11 @@ import com.mashape.unirest.http.Unirest;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.time.*;
+import java.time.Clock;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.TimeZone;
 
 public class CanvasAPI {
@@ -23,22 +24,20 @@ public class CanvasAPI {
         this.url = url;
     }
 
-    /**
-     * (Re)Initializes the current time from UTC to PST
-     */
     public void initializeTime() {
         // Date
         TimeZone.setDefault( TimeZone.getTimeZone("UTC")); // SET SYSTEM TIME TO UTC
-        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         LocalDateTime now = LocalDateTime.now();
-        // Formats the UTC to PST
-        String todayFullTime = changeUTCtoPST(dtf.format(now));
-        this.todayDate = todayFullTime.substring(0, todayFullTime.indexOf('T'));
-        // Time is like HH:mm:ss[Los_Angeles/...], so snip after T
-        this.todayTime = todayFullTime.substring(todayFullTime.indexOf('T') + 1, todayFullTime.indexOf('-', todayFullTime.indexOf('T') + 1));
+        this.todayDate = dtf.format(now);
 
         todayDateArr = this.todayDate.split("-");
-        todayTimeArr = this.todayTime.split(":");
+        // Time - UTC
+        Clock clock = Clock.systemUTC();
+        LocalTime nowTime = LocalTime.now(clock);
+        todayTime = nowTime.format( DateTimeFormatter.ofPattern("HH:mm:ss") );
+
+        todayTimeArr = todayTime.split(":");
     }
 
     public ArrayList<Assignment> getTodaysAssigments() {
@@ -49,7 +48,7 @@ public class CanvasAPI {
         // initializes new time
         initializeTime();
 
-        System.out.println(ConsoleColors.WHITE_BACKGROUND + ConsoleColors.BLACK_BOLD + "TODAY - API called at (PST):" + ConsoleColors.RESET);
+        System.out.println(ConsoleColors.WHITE_BACKGROUND + ConsoleColors.BLACK_BOLD + "TODAY - API called at (UTC):" + ConsoleColors.RESET);
         System.out.println(todayDate);
         System.out.println(todayTime);
 
@@ -89,8 +88,7 @@ public class CanvasAPI {
                     // If Cache has the key of current assignment's name - meaning it exists
                     if(Cache.cache.containsKey(tempAssignment.getName())
                             && Cache.cache.get(tempAssignment.getName()).equals(tempAssignment)) {
-                        System.out.println(ConsoleColors.CYAN_BACKGROUND + ConsoleColors.BLACK_BOLD + tempAssignment.getName()
-                                + " already exists in Cache... Skipping..." + ConsoleColors.RESET);
+                        System.out.println("CONTAINS THE SAME");
                         newAssignments = false;
                         continue;
                     }
@@ -99,7 +97,7 @@ public class CanvasAPI {
 
                 // Assignment Due Date and Time
                 // System.out.println( "Current iteration assignment due at: " + JSONDate.get("due_at"));
-                String date = tempAssignment.correctTimeZoneDueDate;
+                String date = tempAssignment.getDueDate();
 
                 // Assignment Due Date
                 String[] dateArr = date.split("-");
@@ -133,7 +131,7 @@ public class CanvasAPI {
         // initializes new time
         initializeTime();
 
-        System.out.println(ConsoleColors.WHITE_BACKGROUND + ConsoleColors.BLACK_BOLD + "TOMORROW - API called at (PST):" + ConsoleColors.RESET);
+        System.out.println(ConsoleColors.WHITE_BACKGROUND + ConsoleColors.BLACK_BOLD + "TOMORROW - API called at (UTC):" + ConsoleColors.RESET);
         System.out.println(todayDate);
         System.out.println(todayTime);
 
@@ -173,8 +171,7 @@ public class CanvasAPI {
                     // If Cache has the key of current assignment's name - meaning it exists
                     if(Cache.cache.containsKey(tempAssignment.getName())
                             && Cache.cache.get(tempAssignment.getName()).equals(tempAssignment)) {
-                        System.out.println(ConsoleColors.CYAN_BACKGROUND + ConsoleColors.BLACK_BOLD + tempAssignment.getName()
-                                + " already exists in Cache... Skipping..." + ConsoleColors.RESET);
+                        System.out.println("CONTAINS THE SAME");
                         newAssignments = false;
                         continue;
                     }
@@ -182,7 +179,8 @@ public class CanvasAPI {
                 }
 
                 // Assignment Due Date and Time
-                String date = tempAssignment.correctTimeZoneDueDate;
+                 System.out.println( "Current iteration assignment due at: " + JSONDate.get("due_at"));
+                String date = tempAssignment.getDueDate();
 
                 // Assignment Due Date
                 String[] dateArr = date.split("-");
@@ -195,7 +193,6 @@ public class CanvasAPI {
                         String.valueOf(Integer.parseInt(todayDateArr[2]) + 1)
                 )) {
                     System.out.println( ConsoleColors.YELLOW_BOLD + "AN ASSIGNMENT IS DUE TOMORROW!" + ConsoleColors.RESET);
-                    tempAssignment.setForTomorrow(true); // Lets the program know it's for tomorrow. Caching purposes.
                     todaysAssignmentsArr.add(tempAssignment);
                 } // OUT OF IF-STATEMENT
 
@@ -210,42 +207,5 @@ public class CanvasAPI {
         }
 
         return null;
-    }
-
-    /**
-     * Changes UTC to PST
-     * Note: Needs to be flexible for users
-     * @param utcString Time string in format as yyyy-MM-dd'T'HH:mm:ss'Z'
-     * @return String as PST in format as yyyy-MM-dd'T'HH:mm:ss-Z[America/Los_Angeles]
-     */
-    public static String changeUTCtoPST(String utcString) {
-        LocalDateTime ldt = LocalDateTime.parse(utcString, DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'"));
-        ZoneId utcZoneId = ZoneId.of("UTC");
-
-        //LocalDateTime + ZoneId = ZonedDateTime
-        ZonedDateTime utcZonedDateTime = ldt.atZone(utcZoneId);
-        ZoneId caliZoneId = ZoneId.of("America/Los_Angeles"); // Needs flexibility from user
-        ZonedDateTime caliDateTime = utcZonedDateTime.withZoneSameInstant(caliZoneId);
-
-        return caliDateTime.toString();
-    }
-
-    public static boolean checkApiKey(String key, String url) {
-        HttpResponse<JsonNode> jsonResponse = null;
-
-        try {
-            jsonResponse = Unirest.get(url)
-                    .header("Content-Type", "application/json")
-                    .header("Accept", "application/json")
-                    .queryString("access_token", key)
-                    .asJson();
-        }
-        catch (Exception e) {
-            return false;
-        }
-
-        int status = jsonResponse.getStatus();
-
-        return status == 200;
     }
 }

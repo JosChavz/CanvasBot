@@ -13,8 +13,8 @@ public class Cron {
     this.bot = bot;
     this.api = api;
 
-    assignmentsCleanUp();
     assignmentCronTask();
+    assignmentsCleanUp();
     dailyAssignmentTask();
   }
 
@@ -55,7 +55,6 @@ public class Cron {
   }
 
   private void assignmentsCleanUp() {
-    System.out.println(ConsoleColors.GREEN_BACKGROUND + ConsoleColors.BLACK + "Doing hourly Cache cleaning..." + ConsoleColors.RESET);
     Duration syncPeriod = Duration.ofHours(1);
     CronScheduler cron = CronScheduler.create(syncPeriod);
     cron.scheduleAtFixedRateSkippingToLatest(0, 1, TimeUnit.HOURS, runTimeMillis -> {
@@ -64,9 +63,9 @@ public class Cron {
   }
 
   private void dailyAssignmentTask() {
-    Duration syncPeriod = Duration.ofHours(24);
+    Duration syncPeriod = Duration.ofDays(1);
     CronScheduler cron = CronScheduler.create(syncPeriod);
-    cron.scheduleAtFixedRateSkippingToLatest(0, 1, TimeUnit.HOURS, runTimeMillis -> {
+    cron.scheduleAtFixedRateSkippingToLatest(0, 1, TimeUnit.DAYS, runTimeMillis -> {
       String message = "";
       // will call the API here
       ArrayList<Assignment> todaysAssigments= api.getTomorrowAssignments();
